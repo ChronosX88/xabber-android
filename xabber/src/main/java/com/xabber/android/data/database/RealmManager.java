@@ -4,8 +4,10 @@ import android.database.Cursor;
 import android.os.Looper;
 
 import com.xabber.android.data.Application;
+import com.xabber.android.data.database.messagerealm.MessageItem;
 import com.xabber.android.data.database.realm.AccountRealm;
 import com.xabber.android.data.database.realm.ChatDataRealm;
+import com.xabber.android.data.database.realm.ContactRealm;
 import com.xabber.android.data.database.realm.CrowdfundingMessage;
 import com.xabber.android.data.database.realm.DiscoveryInfoCache;
 import com.xabber.android.data.database.realm.EmailRealm;
@@ -35,7 +37,7 @@ import io.realm.annotations.RealmModule;
 
 public class RealmManager {
     private static final String REALM_DATABASE_NAME = "realm_database.realm";
-    private static final int REALM_DATABASE_VERSION = 24;
+    private static final int REALM_DATABASE_VERSION = 25;
     private static final String LOG_TAG = RealmManager.class.getSimpleName();
     private final RealmConfiguration realmConfiguration;
 
@@ -70,7 +72,7 @@ public class RealmManager {
             XMPPUserRealm.class, EmailRealm.class, SocialBindingRealm.class, SyncStateRealm.class,
             PatreonGoalRealm.class, PatreonRealm.class, ChatDataRealm.class, NotificationStateRealm.class,
             CrowdfundingMessage.class, NotifChatRealm.class, NotifMessageRealm.class, NotifyPrefsRealm.class,
-            UploadServer.class})
+            UploadServer.class, ContactRealm.class})
     static class RealmDatabaseModule {
     }
 
@@ -337,6 +339,18 @@ public class RealmManager {
                         if (oldVersion == 23) {
                             schema.get(AccountRealm.class.getSimpleName())
                                     .addField(AccountRealm.Fields.PUSH_SERVICE_JID, String.class);
+
+                            oldVersion++;
+                        }
+
+                        if (oldVersion == 24) {
+                            schema.create(ContactRealm.class.getSimpleName())
+                                    .addField(ContactRealm.Fields.ID, String.class, FieldAttribute.PRIMARY_KEY, FieldAttribute.REQUIRED)
+                                    .addField(ContactRealm.Fields.ACCOUNT, String.class)
+                                    .addField(ContactRealm.Fields.USER, String.class)
+                                    .addField(ContactRealm.Fields.NAME, String.class)
+                                    .addField(ContactRealm.Fields.ACCOUNT_RESOURCE, String.class)
+                                    .addRealmObjectField(ContactRealm.Fields.LAST_MESSAGE, schema.get(MessageItem.class.getSimpleName()));
 
                             oldVersion++;
                         }

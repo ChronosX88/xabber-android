@@ -19,6 +19,7 @@ import com.xabber.android.data.extension.muc.MUCManager;
 import com.xabber.android.data.extension.muc.RoomChat;
 import com.xabber.android.data.extension.muc.RoomContact;
 import com.xabber.android.data.http.CrowdfundingManager;
+import com.xabber.android.data.log.LogManager;
 import com.xabber.android.data.message.AbstractChat;
 import com.xabber.android.data.message.ChatContact;
 import com.xabber.android.data.message.CrowdfundingChat;
@@ -235,7 +236,7 @@ public class ContactListPresenter implements OnContactChangedListener, OnAccount
                     if (!blockedUsers.contains(contact.getUser()))
                         rosterContacts.add(contact);
                 } else rosterContacts.add(contact);
-            }
+            } else rosterContacts.add(contact);
         }
 
         final boolean showOffline = SettingsManager.contactsShowOffline();
@@ -323,6 +324,7 @@ public class ContactListPresenter implements OnContactChangedListener, OnAccount
             // chats on top
             Collection<AbstractChat> chats = MessageManager.getInstance().getChatsOfEnabledAccount();
             chatsGroup = getChatsGroup(chats, currentChatsState);
+            if (!chatsGroup.isEmpty()) hasVisibleContacts = true;
 
             // Build structure.
             for (RosterContact rosterContact : rosterContacts) {
@@ -473,24 +475,19 @@ public class ContactListPresenter implements OnContactChangedListener, OnAccount
 
         for (AbstractChat abstractChat : chats) {
             MessageItem lastMessage = abstractChat.getLastMessage();
-
             if (lastMessage != null) {
-                AccountItem accountItem = AccountManager.getInstance().getAccount(abstractChat.getAccount());
-                if (accountItem != null && accountItem.isEnabled()) {
-
-                    switch (state) {
-                        case unread:
-                            if (!abstractChat.isArchived() && abstractChat.getUnreadMessageCount() > 0)
-                                newChats.add(abstractChat);
-                            break;
-                        case archived:
-                            if (abstractChat.isArchived()) newChats.add(abstractChat);
-                            break;
-                        default:
-                            // recent
-                            if (!abstractChat.isArchived()) newChats.add(abstractChat);
-                            break;
-                    }
+                switch (state) {
+                    case unread:
+                        if (!abstractChat.isArchived() && abstractChat.getUnreadMessageCount() > 0)
+                            newChats.add(abstractChat);
+                        break;
+                    case archived:
+                        if (abstractChat.isArchived()) newChats.add(abstractChat);
+                        break;
+                    default:
+                        // recent
+                        if (!abstractChat.isArchived()) newChats.add(abstractChat);
+                        break;
                 }
             }
         }

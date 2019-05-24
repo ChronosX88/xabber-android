@@ -170,7 +170,7 @@ public class MessageManager implements OnLoadListener, OnPacketListener, OnDisco
 
     public Collection<AbstractChat> getChatsOfEnabledAccount() {
         List<AbstractChat> chats = new ArrayList<>();
-        for (AccountJid accountJid : AccountManager.getInstance().getEnabledAccounts()) {
+        for (AccountJid accountJid : AccountManager.getInstance().getEnabledAccountJids()) {
             chats.addAll(this.chats.getNested(accountJid.toString()).values());
         }
         return chats;
@@ -456,6 +456,12 @@ public class MessageManager implements OnLoadListener, OnPacketListener, OnDisco
             }
         }
         return Collections.unmodifiableCollection(collection);
+    }
+
+    public AbstractChat getOrCreateChat(AccountJid account, UserJid user, MessageItem lastMessage) {
+        AbstractChat chat = getOrCreateChat(account, user);
+        chat.setLastMessage(lastMessage);
+        return chat;
     }
 
     /**

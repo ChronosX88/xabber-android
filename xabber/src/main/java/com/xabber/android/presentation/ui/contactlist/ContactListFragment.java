@@ -24,6 +24,7 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.xabber.android.R;
+import com.xabber.android.data.Application;
 import com.xabber.android.data.SettingsManager;
 import com.xabber.android.data.account.AccountManager;
 import com.xabber.android.data.account.CommonState;
@@ -32,6 +33,7 @@ import com.xabber.android.data.connection.ConnectionManager;
 import com.xabber.android.data.entity.AccountJid;
 import com.xabber.android.data.entity.UserJid;
 import com.xabber.android.data.extension.muc.MUCManager;
+import com.xabber.android.data.log.LogManager;
 import com.xabber.android.data.message.AbstractChat;
 import com.xabber.android.data.message.MessageManager;
 import com.xabber.android.data.roster.AbstractContact;
@@ -85,6 +87,8 @@ public class ContactListFragment extends Fragment implements ContactListView,
     private LinearLayoutManager linearLayoutManager;
     private View placeholderView;
     private TextView tvPlaceholderMessage;
+    private TextView tvDebug;
+    private TextView tvLog;
     private ImageView placeholderImage;
     /**
      * View with information shown on empty contact list.
@@ -168,6 +172,8 @@ public class ContactListFragment extends Fragment implements ContactListView,
         tvPlaceholderMessage = (TextView) view.findViewById(R.id.tvPlaceholderMessage);
         placeholderImage = view.findViewById(R.id.placeholderImage);
         ColorManager.setGrayScaleFilter(placeholderImage);
+        tvDebug = view.findViewById(R.id.tvDebug);
+        tvLog = view.findViewById(R.id.tvLog);
 
         infoView = view.findViewById(R.id.info);
         connectedView = infoView.findViewById(R.id.connected);
@@ -208,6 +214,7 @@ public class ContactListFragment extends Fragment implements ContactListView,
             scrollToAccount(scrollToAccountJid);
             scrollToAccountJid = null;
         }
+        Application.getInstance().setLogUIInitTime();
     }
 
     @Override
@@ -221,6 +228,12 @@ public class ContactListFragment extends Fragment implements ContactListView,
         this.items.clear();
         this.items.addAll(items);
         adapter.updateDataSet(this.items);
+        Application.getInstance().log("update items: " + items.size());
+        if (items.size() > 10) {
+            Application.getInstance().setLogListInitTime();
+        }
+        tvLog.setText(Application.getInstance().getLog());
+        tvDebug.setText(Application.getInstance().getInitTime());
     }
 
     /**

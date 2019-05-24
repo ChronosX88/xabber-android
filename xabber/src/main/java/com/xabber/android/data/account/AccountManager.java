@@ -107,6 +107,7 @@ public class AccountManager implements OnLoadListener, OnUnloadListener, OnWipeL
      * List of accounts.
      */
     private final Map<AccountJid, AccountItem> accountItems;
+    private final List<AccountJid> enabledAccountJids;
     private final BaseAccountNotificationProvider<AccountError> accountErrorProvider;
 
     private final Application application;
@@ -131,12 +132,51 @@ public class AccountManager implements OnLoadListener, OnUnloadListener, OnWipeL
         this.application = Application.getInstance();
         accountItems = new HashMap<>();
         savedStatuses = new ArrayList<>();
+        enabledAccountJids = new ArrayList<>();
         accountErrorProvider = new BaseAccountNotificationProvider<>(R.drawable.ic_stat_error);
 
         colors = application.getResources().getIntArray(R.array.account_color_names).length;
 
         away = false;
         xa = false;
+    }
+
+    public void onPreInitialize() {
+        Realm realm = RealmManager.getInstance().getRealmUiThread();
+        RealmResults<AccountRealm> accountRealms = realm.where(AccountRealm.class).findAll();
+
+        for (AccountRealm accountRealm : accountRealms) {
+            DomainBareJid serverName = null;
+            try {
+                serverName = JidCreate.domainBareFrom(accountRealm.getServerName());
+            } catch (XmppStringprepException e) {
+                LogManager.exception(this, e);
+            }
+
+            Localpart userName = null;
+            try {
+                userName = Localpart.from(accountRealm.getUserName());
+            } catch (XmppStringprepException e) {
+                LogManager.exception(this, e);
+            }
+
+            Resourcepart resource = null;
+            try {
+                resource = Resourcepart.from(accountRealm.getResource());
+            } catch (XmppStringprepException e) {
+                LogManager.exception(this, e);
+            }
+
+            if (serverName == null || userName == null || resource == null) {
+                LogManager.e(LOG_TAG, "could not create account. username " + userName
+                        + ", server name " + serverName
+                        + ", resource " + resource);
+                continue;
+            }
+
+            if (accountRealm.isEnabled())
+                enabledAccountJids.add(AccountJid.from(userName, serverName, resource));
+        }
     }
 
     @Override
@@ -711,6 +751,14 @@ public class AccountManager implements OnLoadListener, OnUnloadListener, OnWipeL
             }
         }
 
+        return Collections.unmodifiableCollection(enabledAccounts);
+    }
+
+    public Collection<AccountJid> getEnabledAccountJids() {
+        List<AccountJid> enabledAccounts = new ArrayList<>();
+        for (AccountJid account : enabledAccountJids) {
+            if(!enabledAccounts.contains(account)) enabledAccounts.add(account);
+        }
         return Collections.unmodifiableCollection(enabledAccounts);
     }
 
